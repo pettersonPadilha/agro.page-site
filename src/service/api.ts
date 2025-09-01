@@ -6,7 +6,7 @@ const environment = {
 };
 
 const api = axios.create({
-  baseURL: "https://comm-salem-salaries-scores.trycloudflare.com",
+  baseURL: "https://hour-bookmarks-decline-printing.trycloudflare.com",
 });
 
 export { api };

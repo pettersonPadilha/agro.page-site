@@ -86,8 +86,24 @@ export const SharedBio: React.FC<ModalProps> = ({
               <span className="font-black">agro.page</span>{" "}
             </p>
             <div className="flex flex-col gap-2 mt-4">
-              <Button color="secondary">Criar minha bio grátis</Button>
-              <Button color="secondary">Entrar</Button>
+              <Button
+                color="secondary"
+                onClick={() =>
+                  (window.location.href =
+                    "https://agro-page-site.vercel.app/inicio")
+                }
+              >
+                Criar minha bio grátis
+              </Button>
+              <Button
+                color="secondary"
+                onClick={() =>
+                  (window.location.href =
+                    "https://agro-page-painel-clientes-agropage.vercel.app/")
+                }
+              >
+                Entrar
+              </Button>
               {/* <Button color="secondary">Download</Button> */}
             </div>
           </div>
