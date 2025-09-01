@@ -6,7 +6,7 @@ const environment = {
 };
 
 const api = axios.create({
-  baseURL: "https://deutsche-our-concentrate-adjust.trycloudflare.com",
+  baseURL: "https://diffs-headers-thy-disable.trycloudflare.com",
 });
 
 export { api };
