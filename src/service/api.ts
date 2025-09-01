@@ -6,7 +6,7 @@ const environment = {
 };
 
 const api = axios.create({
-  baseURL: "https://meaningful-source-media-tiger.trycloudflare.com",
+  baseURL: "https://comm-salem-salaries-scores.trycloudflare.com",
 });
 
 export { api };
