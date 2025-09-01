@@ -206,20 +206,22 @@ export default function Page({ params }: { params: Params }) {
   };
 
   const handleModalSendConfirmationEmail = useCallback(async () => {
-    setLoadingEmail(true);
+    // setLoadingEmail(true);
     if (!user) return;
 
-    const response = await api.post("/users/email", {
-      id: user.id,
-    });
+    // const response = await api.post("/users/email", {
+    //   id: user.id,
+    // });
 
-    toast.success("E-mail de confirmação enviado!");
+    // toast.success("E-mail de confirmação enviado!");
+
+    // router.push(routes.customTheme(user.id, user.username));
+
+    // setLoadingEmail(false);
+
+    // setHandleModalIsOpen(false);
 
     router.push(routes.customTheme(user.id, user.username));
-
-    setLoadingEmail(false);
-
-    setHandleModalIsOpen(false);
   }, [user, router]);
 
   return (
