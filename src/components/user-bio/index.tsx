@@ -148,7 +148,7 @@ export function UserBio({ user }: Props) {
 
             <p style={{ color: theme.textColor }}>{user.name}</p>
 
-            <div className="flex flex-col items-center w-6/12 space-y-4 overflow-y-auto scrollbar-none  max-h-72">
+            <div className="flex flex-col items-center w-9/12 md:w-6/12 space-y-4 overflow-y-auto scrollbar-none  max-h-72">
               {items.map((item) => (
                 <Link
                   key={item.id}
