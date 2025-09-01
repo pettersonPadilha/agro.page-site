@@ -11,10 +11,6 @@ interface Props {
   params: { slug: string };
 }
 
-interface Props {
-  user: User | null;
-}
-
 export default function Page({ params }: Props) {
   const [loading, setLoading] = useState<boolean>(true);
   const [user, setUser] = useState<User | null>(null);

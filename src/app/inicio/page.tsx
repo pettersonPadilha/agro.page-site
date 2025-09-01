@@ -2,8 +2,8 @@
 
 import { ProgressBar } from "@/components/progressBar";
 import Link from "next/link";
-import { Button, Input, Password } from "rizzui";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Button, Input } from "rizzui";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -25,23 +25,18 @@ const schema = yup.object().shape({
 
 export default function Page() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const usernameFromQuery = searchParams.get("username");
-
-  const Defaultvalues = {
-    username: usernameFromQuery || "",
-  };
 
   const {
     register,
     handleSubmit,
     setValue,
     formState: { errors },
-    watch,
-  } = useForm({
+  } = useForm<IFormsProps>({
     mode: "onChange",
     resolver: yupResolver(schema),
-    defaultValues: Defaultvalues,
+    defaultValues: {
+      username: "",
+    },
   });
 
   const onSubmitForm = async ({ username }: IFormsProps) => {
@@ -57,9 +52,7 @@ export default function Page() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === " ") {
-      e.preventDefault();
-    }
+    if (e.key === " ") e.preventDefault();
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,40 +62,33 @@ export default function Page() {
   return (
     <div>
       <header className="flex flex-col items-center justify-center">
-        <header className="mt-20">
-          <div>
-            <img
-              src="../../../img/assets/agro.page.white.png"
-              alt=""
-              className="h-8 object-cover"
-            />
-          </div>
-        </header>
+        <div className="mt-20">
+          <img
+            src="../../../img/assets/agro.page.white.png"
+            alt="Logo Agro.page"
+            className="h-8 object-cover"
+          />
+        </div>
       </header>
 
       <div className="container mx-auto md:max-w-4xl max-w-full">
         {/* <ProgressBar progress="" /> */}
 
-        <div className="mt-8 flex justify-center items-center flex-col">
-          <div className="flex md:flex-col md:items-start items-center gap-1 justify-center">
-            <h1 className="text-white md:text-4xl text-2xl font-studioK">
-              Simplifique, conecte, cresça!
-            </h1>
-          </div>
-          <p className="text-white md:text-left text-center font-poppins font font-thin mt-2">
+        <div className="mt-8 flex flex-col items-center justify-center">
+          <h1 className="text-white md:text-4xl text-2xl font-studioK">
+            Simplifique, conecte, cresça!
+          </h1>
+          <p className="text-white md:text-left text-center font-poppins font-thin mt-2">
             Qual vai ser o nome do seu agro.page?
           </p>
         </div>
 
-        {/* input */}
         <form className="mt-10 px-4" onSubmit={handleSubmit(onSubmitForm)}>
           <Input
             prefix="agro.page"
             placeholder="Digite seu nome"
-            className=" text-white"
-            {...register("username", {
-              onChange: handleInputChange,
-            })}
+            className="text-white"
+            {...register("username", { onChange: handleInputChange })}
             onKeyDown={handleKeyDown}
             error={errors.username?.message}
             autoComplete="off"
@@ -114,9 +100,9 @@ export default function Page() {
             </p>
             <Link
               href="https://cliente.agro.page"
-              className="text-white font-poppins text-sm font-light"
+              className="text-white font-poppins text-sm font-light underline"
             >
-              <p className="underline">Faça o login</p>
+              Faça o login
             </Link>
           </div>
 
