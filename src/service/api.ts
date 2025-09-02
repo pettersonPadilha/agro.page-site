@@ -6,7 +6,7 @@ const environment = {
 };
 
 const api = axios.create({
-  baseURL: "https://flat-doors-inquiries-helena.trycloudflare.com",
+  baseURL: "http://164.92.79.198",
 });
 
 export { api };

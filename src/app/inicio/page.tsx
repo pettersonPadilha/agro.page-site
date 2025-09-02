@@ -11,6 +11,7 @@ import { findUserByUsername } from "@/store/user";
 import toast from "react-hot-toast";
 import { createLocalStorageKey } from "@/utils/localStorage";
 import { routes } from "@/config/route";
+import { useRef, useState, useEffect } from "react";
 
 interface IFormsProps {
   username: string;
@@ -23,13 +24,18 @@ const schema = yup.object().shape({
     .required("Usuário é obrigatório"),
 });
 
+const PREFIX = "agro.page//";
+
 export default function Page() {
   const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   const {
-    register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<IFormsProps>({
     mode: "onChange",
@@ -38,6 +44,8 @@ export default function Page() {
       username: "",
     },
   });
+
+  const username = watch("username");
 
   const onSubmitForm = async ({ username }: IFormsProps) => {
     const user = await findUserByUsername(username);
@@ -56,8 +64,68 @@ export default function Page() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue("username", e.target.value.toLowerCase());
+    let value = e.target.value;
+
+    if (!value.startsWith(PREFIX)) {
+      value = PREFIX;
+    }
+
+    const rawUsername = value.slice(PREFIX.length);
+    const sanitized = rawUsername.replace(/\s+/g, "").toLowerCase();
+
+    setValue("username", sanitized, { shouldValidate: true });
   };
+
+  const handleSelect = () => {
+    const input = inputRef.current;
+    if (!input) return;
+
+    const minPos = PREFIX.length;
+    if (input.selectionStart! < minPos) {
+      input.setSelectionRange(minPos, minPos);
+    }
+    if (input.selectionEnd! < minPos) {
+      input.setSelectionRange(minPos, minPos);
+    }
+  };
+
+  // 🔮 Gerar sugestões automáticas
+  useEffect(() => {
+    const generateSuggestions = async () => {
+      if (!username.includes(".")) {
+        setSuggestions([]);
+        return;
+      }
+
+      const parts = username.split(".");
+      const joined = parts.join("");
+
+      let candidates = [
+        parts.join("-"), // petter-padilha
+        parts.join("_"), // petter_padilha
+        joined, // petterpadilha
+      ].filter((v, i, arr) => arr.indexOf(v) === i); // remove duplicados
+
+      const final: string[] = [];
+
+      for (let cand of candidates) {
+        let suggestion = cand;
+        let counter = 1;
+
+        while (await findUserByUsername(suggestion)) {
+          suggestion = `${cand}${counter}`;
+          counter++;
+        }
+
+        final.push(suggestion);
+        if (final.length >= 3) break;
+      }
+
+      setSuggestions(final);
+    };
+
+    generateSuggestions();
+  }, [username]);
 
   return (
     <div>
@@ -72,8 +140,6 @@ export default function Page() {
       </header>
 
       <div className="container mx-auto md:max-w-4xl max-w-full">
-        {/* <ProgressBar progress="" /> */}
-
         <div className="mt-8 flex flex-col items-center justify-center">
           <h1 className="text-white md:text-4xl text-2xl font-studioK">
             Simplifique, conecte, cresça!
@@ -85,14 +151,33 @@ export default function Page() {
 
         <form className="mt-10 px-4" onSubmit={handleSubmit(onSubmitForm)}>
           <Input
-            prefix="agro.page"
-            placeholder="Digite seu nome"
-            className="text-white"
-            {...register("username", { onChange: handleInputChange })}
+            ref={inputRef}
+            value={PREFIX + username}
+            onChange={handleInputChange}
             onKeyDown={handleKeyDown}
+            onSelect={handleSelect}
             error={errors.username?.message}
+            className="text-white"
             autoComplete="off"
           />
+
+          {/* sugestões */}
+          {suggestions.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {suggestions.map((sug) => (
+                <button
+                  key={sug}
+                  type="button"
+                  onClick={() =>
+                    setValue("username", sug, { shouldValidate: true })
+                  }
+                  className="rounded bg-white/10 px-3 py-1 text-sm text-white hover:bg-white/20"
+                >
+                  {sug}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="mt-4 flex items-center justify-center gap-1">
             <p className="text-white font-poppins text-sm font-light">

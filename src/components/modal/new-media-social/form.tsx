@@ -7,7 +7,7 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createSocialMedia } from "@/store/social-media";
-import { formatPhone, unmaskPhone } from "@/utils/format";
+import { formatPhone } from "@/utils/format";
 
 interface SocialOption {
   label: string;
@@ -34,6 +34,49 @@ interface ModalProps {
   getDataApi: () => Promise<void>;
 }
 
+// Função para limpar username/email/número
+function sanitizeUsername(
+  input: string,
+  type: "whatsapp" | "email" | "linkedin" | "default" = "default"
+): string {
+  if (!input) return "";
+
+  let value = input.trim();
+
+  try {
+    if (value.startsWith("http") || value.startsWith("www.")) {
+      const url = new URL(
+        value.startsWith("http") ? value : `https://${value}`
+      );
+      value = url.pathname.replace(/^\/+/, ""); // remove "/" inicial
+      if (!value && url.searchParams.size > 0) {
+        value = url.searchParams.values().next().value || "";
+      }
+    }
+  } catch {
+    // não era URL, mantém como está
+  }
+
+  if (type === "whatsapp") {
+    let number = value.replace(/\D/g, "");
+    if (number.startsWith("55")) {
+      number = number.substring(2);
+    }
+    return number;
+  }
+
+  if (type === "email") {
+    return value;
+  }
+
+  if (type === "linkedin") {
+    const parts = value.split("/");
+    return parts[parts.length - 1] || value;
+  }
+
+  return value.replace(/^@/, ""); // remove @ inicial
+}
+
 export function FormNewMediaSocial({
   handleModalIsOpen,
   userId,
@@ -57,8 +100,21 @@ export function FormNewMediaSocial({
     },
   });
 
+  // Detecta WhatsApp
   const isWhatsApp = useMemo(
     () => selectedLabel.toLowerCase().includes("whats"),
+    [selectedLabel]
+  );
+
+  // Detecta Email
+  const isEmail = useMemo(
+    () => selectedLabel.toLowerCase() === "email",
+    [selectedLabel]
+  );
+
+  // Detecta LinkedIn
+  const isLinkedIn = useMemo(
+    () => selectedLabel.toLowerCase().includes("linkedin"),
     [selectedLabel]
   );
 
@@ -78,10 +134,16 @@ export function FormNewMediaSocial({
   }, [getDataAccountSocial]);
 
   const onSubmit = async (data: FormValues) => {
-    // Se for WhatsApp, remove a máscara antes de enviar
-    const sanitizedUsername = isWhatsApp
-      ? unmaskPhone(data.username)
-      : data.username;
+    const sanitizedUsername = sanitizeUsername(
+      data.username,
+      isWhatsApp
+        ? "whatsapp"
+        : isEmail
+        ? "email"
+        : isLinkedIn
+        ? "linkedin"
+        : "default"
+    );
 
     await createSocialMedia({
       userId: userId,
@@ -91,6 +153,13 @@ export function FormNewMediaSocial({
 
     handleModalIsOpen(false);
     getDataApi();
+  };
+
+  const getPlaceholder = () => {
+    if (isWhatsApp) return "(99) 99999-9999";
+    if (isEmail) return "Digite seu e-mail";
+    if (isLinkedIn) return "Cole seu perfil do LinkedIn ou username";
+    return "Digite seu usuário";
   };
 
   return (
@@ -103,9 +172,7 @@ export function FormNewMediaSocial({
             (s) => s.value === e.target.value
           );
           setSelectedLabel(selected ? selected.label : "Rede social");
-          // Limpa o username ao trocar de rede
           resetField("username");
-          // Mantém o valor de socialId no RHF
           setValue("socialId", e.target.value, {
             shouldDirty: true,
             shouldValidate: true,
@@ -130,8 +197,8 @@ export function FormNewMediaSocial({
         render={({ field }) => (
           <Input
             {...field}
-            type={isWhatsApp ? "tel" : "text"}
-            placeholder={isWhatsApp ? "(99) 99999-9999" : selectedLabel}
+            type={isWhatsApp ? "tel" : isEmail ? "email" : "text"}
+            placeholder={getPlaceholder()}
             className="w-full"
             error={errors.username ? errors.username.message : undefined}
             onChange={(e) => {

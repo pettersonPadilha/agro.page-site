@@ -104,9 +104,9 @@ const Index: React.FC<{ params: Params }> = ({ params }) => {
         className="mt-10 px-4 space-y-5 "
       >
         <Input
-          prefix="agro.page"
           {...register("username")}
           className="text-white "
+          value={`agro.page/${params.slug}`}
           placeholder="Link Bio"
           error={errors.username?.message}
           autoComplete="off"

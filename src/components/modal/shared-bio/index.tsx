@@ -116,7 +116,7 @@ export const SharedBio: React.FC<ModalProps> = ({
               href="https://agro.page/denuncia"
               className="flex items-center gap-1 hover:text-orange-500 transition"
             >
-              <CiWarning /> Denuncie
+              <CiWarning /> Denuncie esse link
             </Link>
           </div>
         </div>

@@ -1,18 +1,15 @@
 "use client";
 
 import type React from "react";
-import { ModalNewMediaSocial } from "@/components/modal/new-media-social";
-import { ModalNewLinkBio } from "@/components/modal/new-link-bio";
-import { ProgressBar } from "@/components/progressBar";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button, Loader, Modal } from "rizzui";
+import { Button, Loader, Modal, Empty, Switch } from "rizzui";
 import { api } from "@/service/api";
 import { FaTrashArrowUp } from "react-icons/fa6";
-import { set } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
-import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { routes } from "@/config/route";
+import { FormNewLinkBio } from "@/components/modal/new-link-bio/form";
+import { FormNewMediaSocial } from "@/components/modal/new-media-social/form";
 
 type Params = { id: string };
 
@@ -25,7 +22,6 @@ type UnifiedItem = {
   sequence: number;
 };
 
-// heurística pra deduzir provider caso não venha no JSON
 function guessProviderName(rawUrl: string): string {
   try {
     if (rawUrl.startsWith("mailto:")) return "Email";
@@ -65,33 +61,20 @@ interface User {
 }
 
 export default function Page({ params }: { params: Params }) {
-  const [loadingEmail, setLoadingEmail] = useState(false);
   const router = useRouter();
   const [handleModalIsOpen, setHandleModalIsOpen] = useState(false);
-  const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [modalIsOpenLinkBio, setModalIsOpenLinkBio] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [items, setItems] = useState<UnifiedItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLinkActive, setIsLinkActive] = useState(false);
 
   const dragFromIndex = useRef<number | null>(null);
   const isDraggingRef = useRef(false);
-
-  const prevItemsRef = useRef<UnifiedItem[]>([]);
-
-  const handleIsOpenModalAddNewSocialMedia = useCallback(() => {
-    setModalIsOpen((prev) => !prev);
-  }, []);
-
-  const handleIsOpenModalAddNewLinkBio = useCallback(() => {
-    setModalIsOpenLinkBio((prev) => !prev);
-  }, []);
 
   const getDataApi = useCallback(async () => {
     setLoading(true);
     try {
       const response = await api.get(`/user/${params.id}`);
-
       setUser(response.data);
 
       const orderItems: UnifiedItem[] =
@@ -174,8 +157,19 @@ export default function Page({ params }: { params: Params }) {
       return;
     }
 
+    // 🔥 Detecta se soltou na metade de cima ou baixo do item
+    const bounding = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const offset = e.clientY - bounding.top;
+    let targetIndex = toIndex;
+
+    if (offset < bounding.height / 2) {
+      targetIndex = toIndex; // antes do item
+    } else {
+      targetIndex = toIndex + 1; // depois do item
+    }
+
     const previous = items;
-    const next = arrayMove(items, fromIndex, toIndex);
+    const next = arrayMove(items, fromIndex, targetIndex);
 
     setItems(next);
 
@@ -205,25 +199,6 @@ export default function Page({ params }: { params: Params }) {
     }
   };
 
-  const handleModalSendConfirmationEmail = useCallback(async () => {
-    // setLoadingEmail(true);
-    if (!user) return;
-
-    // const response = await api.post("/users/email", {
-    //   id: user.id,
-    // });
-
-    // toast.success("E-mail de confirmação enviado!");
-
-    // router.push(routes.customTheme(user.id, user.username));
-
-    // setLoadingEmail(false);
-
-    // setHandleModalIsOpen(false);
-
-    router.push(routes.customTheme(user.id, user.username));
-  }, [user, router]);
-
   return (
     <div>
       <header className="flex flex-col items-center justify-center">
@@ -239,23 +214,39 @@ export default function Page({ params }: { params: Params }) {
       </header>
 
       <div className="container mx-auto md:max-w-4xl max-w-full">
-        {/* <ProgressBar /> */}
-
-        <div className="mt-10 flex flex-between items-center justify-between">
+        <div className="mt-10 flex justify-center items-center gap-2">
           <Button
-            color="secondary"
-            onClick={handleIsOpenModalAddNewSocialMedia}
+            className=""
+            onClick={() => setHandleModalIsOpen(true)}
+            color="primary"
           >
-            Adicionar redes sociais
+            Adicionar
           </Button>
-          <Button onClick={handleIsOpenModalAddNewLinkBio} color="secondary">
-            Adicionar links
-          </Button>
+
+          <div>
+            <Button
+              onClick={() => router.push(routes.customTheme(params.id))}
+              color="secondary"
+              className="w-28"
+            >
+              Avançar
+            </Button>
+          </div>
         </div>
 
         {loading ? (
           <div className="mt-10 flex justify-center">
             <Loader size="lg" color="success" />
+          </div>
+        ) : items.length === 0 ? (
+          <div className="flex justify-center h-96 flex-col items-center">
+            <Empty
+              textClassName="mt-2 text-white text-center"
+              alignment="center"
+            />
+            <p className="mt-2 text-white text-center text-sm">
+              Clique em adicionar para incluir sua primeira rede social ou link!
+            </p>
           </div>
         ) : (
           <div className="mt-10 space-y-3 max-h-96 overflow-y-auto scrollbar-none">
@@ -292,6 +283,7 @@ export default function Page({ params }: { params: Params }) {
                       variant="text"
                       color="primary"
                       aria-label={deleteLabel}
+                      title={deleteLabel}
                       className="text-white hover:text-green-600"
                       onClick={(e) => {
                         e.preventDefault();
@@ -310,64 +302,53 @@ export default function Page({ params }: { params: Params }) {
             })}
           </div>
         )}
-        <div className="mt-10 flex justify-end">
-          <Button
-            onClick={() => setHandleModalIsOpen((prev) => !prev)}
-            color="secondary"
-            className="w-28"
-          >
-            Avançar
-          </Button>
-        </div>
       </div>
-
-      <ModalNewMediaSocial
-        handleModalIsOpen={handleIsOpenModalAddNewSocialMedia}
-        isOpen={modalIsOpen}
-        userId={params.id}
-        getDataApi={getDataApi}
-      />
-
-      <ModalNewLinkBio
-        handleModalIsOpen={handleIsOpenModalAddNewLinkBio}
-        isOpen={modalIsOpenLinkBio}
-        userId={params.id}
-        getDataApi={getDataApi}
-      />
 
       <Modal
         isOpen={handleModalIsOpen}
         overlayClassName="backdrop-blur"
-        containerClassName=" rounded-lg max-w-lg"
+        containerClassName="rounded-lg max-w-lg"
         onClose={() => setHandleModalIsOpen(false)}
       >
         <div className="m-auto px-2 pt-4 pb-8 w-full">
           <div className="flex justify-end w-full items-end">
             <button
               onClick={() => setHandleModalIsOpen(false)}
-              className="bg-[#dbd9d9]  rounded hover:bg-[#c5c5c5] text-black"
+              className="bg-[#dbd9d9] rounded hover:bg-[#c5c5c5] text-black"
             >
               <IoMdClose size={19} />
             </button>
           </div>
-          <div className="flex justify-center">
-            <h2 className="text-lg font-semibold">Olá, {user?.name}!</h2>
-          </div>
-          <p className="mt-4  text-sm text-justify">
-            Enviamos um e-mail para <strong>{user?.email}</strong> na sua caixa
-            de entrada. Abra esse e-mail e confirme seu endereço para liberar o
-            acesso à nossa plataforma. Somente após a confirmação você poderá
-            aproveitar todos os benefícios que a Agro.page oferece!
-          </p>
 
-          <Button
-            isLoading={loadingEmail}
-            color="secondary"
-            onClick={() => handleModalSendConfirmationEmail()}
-            className="mt-4 w-full"
-          >
-            Enviar
-          </Button>
+          <div className="flex justify-center mb-4">
+            <h2 className="text-lg font-semibold">Adicionar</h2>
+          </div>
+
+          <div className="flex items-center justify-center mb-6">
+            <Switch
+              variant="outline"
+              label="Ative para adicionar links"
+              size="sm"
+              onChange={(e) => setIsLinkActive(e.target.checked)}
+              checked={isLinkActive}
+            />
+          </div>
+
+          <div>
+            {isLinkActive ? (
+              <FormNewLinkBio
+                userId={params.id}
+                getDataApi={getDataApi}
+                handleModalIsOpen={setHandleModalIsOpen}
+              />
+            ) : (
+              <FormNewMediaSocial
+                userId={params.id}
+                getDataApi={getDataApi}
+                handleModalIsOpen={setHandleModalIsOpen}
+              />
+            )}
+          </div>
         </div>
       </Modal>
     </div>

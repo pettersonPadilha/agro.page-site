@@ -188,7 +188,7 @@ export function UserBio({ user }: Props) {
                   className="hover:text-orange-500"
                   target="_blank"
                 >
-                  <p>Associe ao agro.page</p>
+                  <p>Junte-se ao {`@${user.username}`} agro.page</p>
                 </Link>
               </div>
             </div>
