@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import React, { Suspense } from "react";
 import { ProgressBar } from "@/components/progressBar";
 import Link from "next/link";
-import { Button, Input } from "rizzui";
+import { Button, Input, Loader } from "rizzui";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -31,7 +31,13 @@ const PREFIX = "agro.page//";
 
 export default function Page() {
   return (
-    <Suspense fallback={<div>Carregando...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex h-screen w-full items-center justify-center">
+          <Loader size="lg" color="secondary" />
+        </div>
+      }
+    >
       <ClientPage />
     </Suspense>
   );
