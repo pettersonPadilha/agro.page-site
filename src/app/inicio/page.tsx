@@ -3,7 +3,7 @@
 import { ProgressBar } from "@/components/progressBar";
 import Link from "next/link";
 import { Button, Input } from "rizzui";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -29,6 +29,7 @@ const PREFIX = "agro.page//";
 export default function Page() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchParams = useSearchParams();
 
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
@@ -46,6 +47,14 @@ export default function Page() {
   });
 
   const username = watch("username");
+
+  // 🔹 Preencher username vindo da URL
+  useEffect(() => {
+    const paramUsername = searchParams.get("username");
+    if (paramUsername) {
+      setValue("username", paramUsername, { shouldValidate: true });
+    }
+  }, [searchParams, setValue]);
 
   const onSubmitForm = async ({ username }: IFormsProps) => {
     const user = await findUserByUsername(username);
